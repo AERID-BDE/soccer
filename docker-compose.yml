@@ -9,8 +9,8 @@ services:
       # Mount source code for hot reload
       - .:/app
       - /app/node_modules
-      # Mount data.json for persistence
-      - ./public/data.json:/app/public/data.json
+      # Mount public folder for data persistence
+      - ./public:/app/public
     environment:
       - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
     stdin_open: true
