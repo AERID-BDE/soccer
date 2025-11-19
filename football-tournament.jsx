@@ -104,17 +104,43 @@ const FootballTournament = ({ user, onSignOut }) => {
     loadData();
   }, []);
 
+  // Reload data from data.json to ensure shared data is synchronized
+  const reloadSharedData = async () => {
+    try {
+      // Add timestamp to bypass any potential caching
+      const response = await fetch(`/data.json?t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Update states with fresh data from shared file
+        if (data.players) setPlayers(data.players);
+        if (data.events) setEvents(data.events);
+        if (data.matches) setMatches(data.matches);
+        if (data.eventWinnerAwarded) setEventWinnerAwarded(data.eventWinnerAwarded);
+
+        // Also update localStorage to keep it in sync
+        localStorage.setItem('players', JSON.stringify(data.players || []));
+        localStorage.setItem('events', JSON.stringify(data.events || []));
+        localStorage.setItem('matches', JSON.stringify(data.matches || []));
+        localStorage.setItem('eventWinnerAwarded', JSON.stringify(data.eventWinnerAwarded || {}));
+
+        console.log('Shared data reloaded successfully');
+      }
+    } catch (error) {
+      console.warn('Failed to reload shared data:', error);
+    }
+  };
+
   // Save data to localStorage and update data.json
   const saveData = async () => {
     // Don't save on initial load
     if (isInitialLoad) return;
-    
+
     // Save to localStorage
     localStorage.setItem('players', JSON.stringify(players));
     localStorage.setItem('events', JSON.stringify(events));
     localStorage.setItem('matches', JSON.stringify(matches));
     localStorage.setItem('eventWinnerAwarded', JSON.stringify(eventWinnerAwarded));
-    
+
     // Save to data.json via API
     const data = {
       players,
@@ -123,7 +149,7 @@ const FootballTournament = ({ user, onSignOut }) => {
       eventWinnerAwarded,
       lastUpdated: new Date().toISOString()
     };
-    
+
     try {
       // Try to save via API endpoint (works in dev mode with Vite plugin)
       const response = await fetch('/api/save-data', {
@@ -133,9 +159,11 @@ const FootballTournament = ({ user, onSignOut }) => {
         },
         body: JSON.stringify(data)
       });
-      
+
       if (response.ok) {
         console.log('Data saved to data.json successfully');
+        // Reload shared data to ensure all clients see the latest version
+        await reloadSharedData();
       } else {
         console.warn('Failed to save to data.json via API, data is in localStorage');
       }

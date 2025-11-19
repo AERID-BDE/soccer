@@ -12,7 +12,23 @@ export default defineConfig({
       'soccer.aerid.fr',
       'localhost',
       '.aerid.fr' // Allow all subdomains of aerid.fr
-    ]
+    ],
+    fs: {
+      // Allow serving files from the mounted volume
+      allow: ['.']
+    }
   },
+  // Disable caching for public assets to ensure data.json changes are reflected immediately
+  optimizeDeps: {
+    exclude: []
+  },
+  build: {
+    // Ensure public assets are not cached in production either
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  }
 })
 
